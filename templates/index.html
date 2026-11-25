@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Text Summarizer | AI Powered</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">AI<span>SUM</span></div>
+            <span class="status">
+                <span class="status-dot"></span>
+                AI Powered
+            </span>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="tag">✦ HUGGING FACE TRANSFORMERS</div>
+
+            <h1>
+                Make Long Text<br>
+                <span>Short & Simple.</span>
+            </h1>
+
+            <p>
+                Transform lengthy articles, documents and paragraphs
+                into clear, meaningful summaries within seconds.
+            </p>
+        </section>
+
+        <!-- Main Form -->
+        <main>
+
+            <form id="summarization-form">
+
+                <div class="input-card">
+
+                    <div class="section-heading">
+                        <label for="dialogue-input">Your Original Text</label>
+                        <span class="input-hint">Paste your content below</span>
+                    </div>
+
+                    <textarea
+                        id="dialogue-input"
+                        name="text"
+                        placeholder="Start typing or paste your text here..."
+                        required
+                    ></textarea>
+
+                    <div class="input-footer">
+                        <span id="word-count">0 words</span>
+                        <span id="char-count">0 characters</span>
+                    </div>
+
+                    <button type="submit" id="summarize-btn">
+                        <span>✦</span> Summarize Text
+                    </button>
+
+                </div>
+
+            </form>
+
+            <!-- Output Section -->
+            <section class="output-card">
+
+                <div class="output-heading">
+                    <div>
+                        <span class="output-label">YOUR RESULT</span>
+                        <h2>Content Summary</h2>
+                    </div>
+
+                    <button id="copy-btn" type="button">
+                        Copy Summary
+                    </button>
+                </div>
+
+                <div class="summary-content">
+                    <p id="summary-text">
+                        Your summarized content will appear here...
+                    </p>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>Built with <span>♥</span> using Hugging Face Transformers</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const textarea = document.getElementById("dialogue-input");
+        const wordCount = document.getElementById("word-count");
+        const charCount = document.getElementById("char-count");
+        const form = document.getElementById("summarization-form");
+        const summarizeBtn = document.getElementById("summarize-btn");
+        const summaryText = document.getElementById("summary-text");
+        const copyBtn = document.getElementById("copy-btn");
+
+        // Word and character counter
+        textarea.addEventListener("input", () => {
+            const text = textarea.value.trim();
+
+            const words = text ? text.split(/\s+/).length : 0;
+
+            wordCount.textContent = words + " words";
+            charCount.textContent = textarea.value.length + " characters";
+        });
+
+        // Copy summary
+        copyBtn.addEventListener("click", async () => {
+            const text = summaryText.textContent.trim();
+
+            if (!text || text === "Your summarized content will appear here...") {
+                alert("No summary available to copy!");
+                return;
+            }
+
+            await navigator.clipboard.writeText(text);
+            copyBtn.textContent = "Copied!";
+
+            setTimeout(() => {
+                copyBtn.textContent = "Copy Summary";
+            }, 2000);
+        });
+
+        // Form submission - connect this to your backend
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const text = textarea.value.trim();
+
+            if (!text) return;
+
+            summarizeBtn.disabled = true;
+            summarizeBtn.textContent = "Summarizing...";
+
+            try {
+                const response = await fetch("/summarize/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ dialogue: text })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        typeof data.detail === "string"
+                            ? data.detail
+                            : "Something went wrong."
+                    );
+                }
+
+                summaryText.textContent = data.summary;
+
+            } catch (error) {
+                summaryText.textContent = "Error: " + error.message;
+            } finally {
+                summarizeBtn.disabled = false;
+                summarizeBtn.innerHTML = "<span>✦</span> Summarize Text";
+            }
+        });
+    </script>
+
+</body>
+</html>
